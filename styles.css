@@ -95,21 +95,49 @@ body {
     padding: var(--spacing-sm) 0;
 }
 
-.logo h2 {
-    font-family: var(--font-display);
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-dark);
-    letter-spacing: -0.02em;
-    transition: transform 0.3s ease;
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
-.logo:hover h2 {
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+.logo:hover .logo-icon {
+    transform: rotate(360deg) scale(1.1);
+}
+
+.logo-text {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.03em;
+    transition: transform 0.3s ease;
+    background: linear-gradient(135deg, var(--text-dark) 0%, var(--primary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.logo:hover .logo-text {
     transform: scale(1.05);
 }
 
-.logo span {
-    color: var(--primary-color);
+.logo-text span {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    letter-spacing: -0.02em;
 }
 
 .nav-menu {
@@ -252,6 +280,100 @@ body {
 
 .hero-content {
     animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-logo {
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.animated-logo {
+    width: 120px;
+    height: 120px;
+    animation: logoEntrance 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logo-circle {
+    stroke-dasharray: 502;
+    stroke-dashoffset: 502;
+    animation: drawCircle 2s ease-in-out forwards;
+    animation-delay: 0.5s;
+}
+
+.logo-w {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: drawPath 1.5s ease-in-out forwards;
+    animation-delay: 1s;
+}
+
+.logo-dot-1,
+.logo-dot-2,
+.logo-dot-3,
+.logo-dot-4 {
+    opacity: 0;
+    animation: fadeInScale 0.5s ease-in-out forwards;
+}
+
+.logo-dot-1 {
+    animation-delay: 1.8s;
+}
+
+.logo-dot-2 {
+    animation-delay: 2s;
+}
+
+.logo-dot-3 {
+    animation-delay: 2.2s;
+}
+
+.logo-dot-4 {
+    animation-delay: 2.4s;
+}
+
+@keyframes logoEntrance {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) rotate(-180deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes drawCircle {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes drawPath {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes fadeInScale {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
 }
 
 .hero-title {
@@ -657,9 +779,15 @@ body {
 
 .project-image {
     height: 280px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     position: relative;
     overflow: hidden;
+    background: var(--bg-light);
+}
+
+.project-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .project-overlay {
