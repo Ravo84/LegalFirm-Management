@@ -4,136 +4,99 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
-
-// SQLite doesn't support enums, using String with default values
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         String        @default("TEAM_MEMBER")
-  isActive     Boolean       @default(true)
-  avatarUrl    String?
-  title        String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  lastLoginAt  DateTime?
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          String    @default("EMPLOYEE") // ADMIN, EMPLOYEE
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  managedProjects Project[]   @relation("ProjectManager")
-  assignments     ProjectAssignment[]
-  tasksAssigned   Task[]      @relation("TaskAssignee")
-  taskUpdates     TaskUpdate[]
-  chatMessages    ChatMessage[]
-  projectUpdates  ProjectUpdate[]
+  managedCases    Case[]    @relation("CaseManager")
+  caseAssignments CaseAssignment[]
+  uploadedDocuments Document[]
+  caseTasks       CaseTask[]    @relation("CaseTaskAssignee")
+  createdCaseTasks CaseTask[]   @relation("CaseTaskCreator")
 }
 
-model Project {
-  id              String              @id @default(cuid())
-  name            String
-  code            String              @unique
-  description     String?
-  status          String              @default("PLANNED")
-  startDate       DateTime?
-  targetDate      DateTime?
-  completedDate   DateTime?
-  progress        Int                 @default(0)
-  budget          Float?
-  clientName      String?
-  tags            String              @default("[]")
-  riskLevel       String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+model Case {
+  id          String           @id @default(uuid())
+  caseNumber  String           @unique
+  title       String
+  description String?
+  clientName  String
+  status      String           @default("OPEN") // OPEN, IN_PROGRESS, UNDER_REVIEW, PENDING_CLIENT, SETTLED, CLOSED, ARCHIVED
+  priority    String           @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  startDate   DateTime?
+  dueDate     DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
-  managerId       String?
-  manager         User?               @relation("ProjectManager", fields: [managerId], references: [id])
+  managerId   String?
+  manager     User?            @relation("CaseManager", fields: [managerId], references: [id])
 
-  assignments     ProjectAssignment[]
-  tasks           Task[]
-  updates         ProjectUpdate[]
-  chatMessages    ChatMessage[]
+  assignments CaseAssignment[]
+  documents   Document[]
+  tasks       CaseTask[]
 }
 
-model ProjectAssignment {
-  id         String   @id @default(cuid())
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId  String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  role       String
-  billable   Boolean  @default(false)
-  allocation Float    @default(1.0)
-  joinedAt   DateTime @default(now())
-  leftAt     DateTime?
+model CaseAssignment {
+  id          String         @id @default(uuid())
+  caseId      String
+  userId      String
 
-  @@unique([projectId, userId])
+  case        Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime       @default(now())
+
+  @@unique([caseId, userId])
 }
 
-model Task {
-  id           String      @id @default(cuid())
-  project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId    String
-  assignee     User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  assigneeId   String?
-  title        String
-  reference    String?     @unique
-  description  String?
-  status       String      @default("NOT_STARTED")
-  priority     String      @default("MEDIUM")
-  startDate    DateTime?
-  dueDate      DateTime?
-  completedAt  DateTime?
-  progress     Int         @default(0)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+model CaseTask {
+  id            String         @id @default(uuid())
+  title         String
+  description   String?
+  status        String         @default("TO_DO") // TO_DO, IN_PROGRESS, DONE, BLOCKED
+  priority      String         @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  dueDate       DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  updates      TaskUpdate[]
+  caseId        String
+  case          Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  assignedToId  String?
+  assignedTo    User?          @relation("CaseTaskAssignee", fields: [assignedToId], references: [id])
+
+  creatorId     String
+  createdBy     User           @relation("CaseTaskCreator", fields: [creatorId], references: [id])
 }
 
-model ProjectUpdate {
-  id          String    @id @default(cuid())
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
-  author      User?     @relation(fields: [authorId], references: [id])
-  authorId    String?
-  summary     String
-  healthScore Int       @default(0)
-  risks       String    @default("[]")
-  blockers    String    @default("[]")
-  createdAt   DateTime  @default(now())
-}
+model Document {
+  id          String       @id @default(uuid())
+  fileName    String
+  originalName String
+  filePath    String
+  fileSize    Int
+  mimeType    String
+  documentType String      // PDF, IMAGE, VIDEO, AUDIO, DOCUMENT, OTHER
+  description String?
+  uploadedAt  DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-model TaskUpdate {
-  id        String   @id @default(cuid())
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId    String
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  String?
-  comment   String
-  createdAt DateTime @default(now())
-}
+  caseId      String?
+  case        Case?        @relation(fields: [caseId], references: [id], onDelete: Cascade)
 
-model ChatMessage {
-  id        String   @id @default(cuid())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  senderId  String
-  content   String
-  attachments String?
-  createdAt DateTime @default(now())
-  editedAt  DateTime?
-}
+  uploadedById String
+  uploadedBy   User        @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
 
-model Configuration {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  scope     String   @default("global")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@index([caseId])
+  @@index([uploadedById])
 }
-

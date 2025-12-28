@@ -1,103 +1,88 @@
-import { Prisma } from "@prisma/client";
-import type { UserRole } from "../types/enums.js";
-
 import { prisma } from "../lib/prisma.js";
 import { hashPassword } from "../utils/password.js";
 
-export const listUsers = async (options: { take?: number; skip?: number } = {}) => {
-  const { take = 25, skip = 0 } = options;
+export const listUsers = async (options: { skip?: number; take?: number; role?: string }) => {
+  const where: any = {};
+  if (options.role) {
+    where.role = options.role;
+  }
 
-  const [users, total] = await prisma.$transaction([
+  const [data, total] = await Promise.all([
     prisma.user.findMany({
-      skip,
-      take,
-      orderBy: { createdAt: "desc" }
+      where,
+      skip: options.skip,
+      take: options.take,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     }),
-    prisma.user.count()
+    prisma.user.count({ where }),
   ]);
 
   return {
-    // FIX 1: Add 'as any' here for type safety
-    data: users.map((user) => toUserResponse(user as any)),
+    data: data.map((user) => ({
+      ...user,
+      fullName: `${user.firstName} ${user.lastName}`,
+    })),
     pagination: {
       total,
-      skip,
-      take
-    }
+      skip: options.skip || 0,
+      take: options.take || 10,
+    },
   };
-}; // <--- FIX 2: Added missing closing brace for listUsers
+};
 
 export const getUserById = async (id: string) => {
-  const user = await prisma.user.findUnique({ where: { id } });
-
-  if (!user) {
-    throw Object.assign(new Error("User not found"), { status: 404 });
-  }
-
-  return toUserResponse(user as any);
-}; // <--- FIX 3: Added missing closing brace for getUserById
-
-export const updateUser = async (id: string, data: Prisma.UserUpdateInput) => {
-  if (data.passwordHash) {
-    throw Object.assign(new Error("Use dedicated password update route"), { status: 400 });
-  }
-
-  const updated = await prisma.user.update({
+  const user = await prisma.user.findUnique({
     where: { id },
-    data
   });
-
-  // FIX 4: Changed 'user as any' to the correct variable 'updated as any'
-  return toUserResponse(updated as any);
+  if (!user) return null;
+  return {
+    ...user,
+    fullName: `${user.firstName} ${user.lastName}`,
+  };
 };
 
-export const changePassword = async (id: string, password: string) => {
-  const passwordHash = await hashPassword(password);
-
-  await prisma.user.update({
-    where: { id },
-    data: { passwordHash }
-  });
-};
-
-export const deactivateUser = async (id: string) => {
-  await prisma.user.update({
-    where: { id },
-    data: { isActive: false }
-  });
-};
-
-export const reactivateUser = async (id: string) => {
-  await prisma.user.update({
-    where: { id },
-    data: { isActive: true }
-  });
-};
-
-export const elevateUserRole = async (id: string, role: UserRole) => {
-  return prisma.user.update({
-    where: { id },
-    data: { role }
-  });
-};
-
-const toUserResponse = (user: {
-  id: string;
+export const createUser = async (data: {
   email: string;
-  role: UserRole;
+  password: string;
   firstName: string;
   lastName: string;
-  isActive: boolean;
-  avatarUrl?: string | null;
-  title?: string | null;
-}) => ({
-  id: user.id,
-  email: user.email,
-  role: user.role,
-  fullName: `${user.firstName} ${user.lastName}`.trim(),
-  firstName: user.firstName,
-  lastName: user.lastName,
-  isActive: user.isActive,
-  avatarUrl: user.avatarUrl,
-  title: user.title ?? undefined
-});
+  role: string;
+}) => {
+  const passwordHash = await hashPassword(data.password);
+  
+  const user = await prisma.user.create({
+    data: {
+      email: data.email,
+      passwordHash,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: data.role as any,
+    },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
+  });
+  
+  return {
+    ...user,
+    fullName: `${user.firstName} ${user.lastName}`,
+  };
+};
+

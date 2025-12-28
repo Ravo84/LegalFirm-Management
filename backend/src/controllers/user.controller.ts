@@ -1,85 +1,54 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Response } from "express";
+import { AuthRequest } from "../middlewares/auth.js";
+import { listUsers, getUserById, createUser } from "../services/user.service.js";
+import { z } from "zod";
 
-import {
-  changePassword,
-  deactivateUser,
-  getUserById,
-  listUsers,
-  reactivateUser,
-  updateUser
-} from "../services/user.service.js";
-import { changePasswordSchema, updateUserSchema } from "../validators/user.validator.js";
+const createUserSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  role: z.enum(["ADMIN", "EMPLOYEE"]),
+});
 
-export const listUsersHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const listUsersHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const take = req.query.take ? Number(req.query.take) : undefined;
-    const skip = req.query.skip ? Number(req.query.skip) : undefined;
-
-    const result = await listUsers({ take, skip });
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getUserHandler = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const user = await getUserById(id);
-    res.json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateUserHandler = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const payload = updateUserSchema.parse(req.body);
-
-    if (payload.role && (!req.user || !["SUPER_ADMIN", "ADMIN"].includes(req.user.role))) {
-      return res.status(403).json({ message: "Only administrators can update roles" });
-    }
-
-    const user = await updateUser(id, {
-      ...payload,
-      title: payload.title === "" ? null : payload.title,
-      avatarUrl: payload.avatarUrl === "" ? null : payload.avatarUrl
+    const users = await listUsers({
+      skip: req.query.skip ? Number(req.query.skip) : undefined,
+      take: req.query.take ? Number(req.query.take) : undefined,
+      role: req.query.role as string,
     });
-    res.json({ user });
-  } catch (error) {
-    next(error);
+    res.json(users);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || "Failed to list users" });
   }
 };
 
-export const changePasswordHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const getUserHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
-    const payload = changePasswordSchema.parse(req.body);
-    await changePassword(id, payload.password);
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+    const user = await getUserById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || "Failed to get user" });
   }
 };
 
-export const deactivateUserHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const createUserHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
-    await deactivateUser(id);
-    res.status(204).send();
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const reactivateUserHandler = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    await reactivateUser(id);
-    res.status(204).send();
-  } catch (error) {
-    next(error);
+    const data = createUserSchema.parse(req.body);
+    const user = await createUser(data);
+    res.status(201).json(user);
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      res.status(400).json({ message: "Email already exists" });
+    } else if (error instanceof z.ZodError) {
+      res.status(400).json({ message: error.errors[0].message });
+    } else {
+      res.status(400).json({ message: error.message || "Failed to create user" });
+    }
   }
 };
 

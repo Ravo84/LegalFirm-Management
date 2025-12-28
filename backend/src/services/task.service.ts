@@ -1,108 +1,103 @@
-import type { TaskStatus } from "../types/enums.js";
-
 import { prisma } from "../lib/prisma.js";
-import type { CreateTaskSchema, UpdateTaskSchema } from "../validators/task.validator.js";
 
-const parseDate = (value?: string) => (value ? new Date(value) : undefined);
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  dueDate?: Date;
+  caseId: string;
+  assignedToId?: string;
+  creatorId: string;
+}
 
-export const createTask = async (input: CreateTaskSchema, authorId: string) => {
-  const task = await prisma.task.create({
-    data: {
-      projectId: input.projectId,
-      title: input.title,
-      description: input.description,
-      status: input.status ?? "NOT_STARTED",
-      priority: input.priority,
-      assigneeId: input.assigneeId,
-      dueDate: parseDate(input.dueDate),
-      startDate: parseDate(input.startDate),
-      progress: input.progress ?? 0,
-      updates: {
-        create: {
-          authorId,
-          comment: "Task created"
-        }
-      }
-    }
+export interface UpdateTaskInput extends Partial<CreateTaskInput> {}
+
+export const createTask = async (data: CreateTaskInput) => {
+  return prisma.caseTask.create({
+    data,
+    include: {
+      assignedTo: true,
+      createdBy: true,
+      case: true,
+    },
   });
-
-  return task;
 };
 
 export const listTasks = async (options: {
-  projectId?: string;
-  assigneeId?: string;
-  status?: TaskStatus;
+  caseId?: string;
+  assignedToId?: string;
+  status?: string;
   skip?: number;
   take?: number;
-} = {}) => {
-  const { projectId, assigneeId, status, skip = 0, take = 25 } = options;
+}) => {
+  const where: any = {};
 
-  const where = {
-    projectId,
-    assigneeId,
-    status
-  };
+  if (options.caseId) {
+    where.caseId = options.caseId;
+  }
 
-  const [tasks, total] = await prisma.$transaction([
-    prisma.task.findMany({
+  if (options.assignedToId) {
+    where.assignedToId = options.assignedToId;
+  }
+
+  if (options.status) {
+    where.status = options.status;
+  }
+
+  const [data, total] = await Promise.all([
+    prisma.caseTask.findMany({
       where,
+      skip: options.skip,
+      take: options.take,
       include: {
-        assignee: true,
-        project: true
+        assignedTo: true,
+        createdBy: true,
+        case: true,
       },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take
+      orderBy: {
+        createdAt: "desc",
+      },
     }),
-    prisma.task.count({ where })
+    prisma.caseTask.count({ where }),
   ]);
 
-  return { data: tasks, pagination: { total, skip, take } };
+  return {
+    data,
+    pagination: {
+      total,
+      skip: options.skip || 0,
+      take: options.take || 10,
+    },
+  };
 };
 
 export const getTask = async (id: string) => {
-  const task = await prisma.task.findUnique({
+  return prisma.caseTask.findUnique({
     where: { id },
     include: {
-      assignee: true,
-      project: true,
-      updates: {
-        orderBy: { createdAt: "desc" },
-        include: { author: true }
-      }
-    }
+      assignedTo: true,
+      createdBy: true,
+      case: true,
+    },
   });
-
-  if (!task) {
-    throw Object.assign(new Error("Task not found"), { status: 404 });
-  }
-
-  return task;
 };
 
-export const updateTask = async (id: string, input: UpdateTaskSchema, authorId: string) => {
-  const { dueDate, startDate, ...rest } = input;
-
-  const task = await prisma.task.update({
+export const updateTask = async (id: string, data: UpdateTaskInput) => {
+  return prisma.caseTask.update({
     where: { id },
-    data: {
-      ...rest,
-      dueDate: parseDate(dueDate),
-      startDate: parseDate(startDate),
-      updates: {
-        create: {
-          authorId,
-          comment: "Task updated"
-        }
-      }
-    }
+    data,
+    include: {
+      assignedTo: true,
+      createdBy: true,
+      case: true,
+    },
   });
-
-  return task;
 };
 
 export const deleteTask = async (id: string) => {
-  await prisma.task.delete({ where: { id } });
+  return prisma.caseTask.delete({
+    where: { id },
+  });
 };
 

@@ -1,89 +1,76 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Response } from "express";
+import { AuthRequest } from "../middlewares/auth.js";
+import { createTask, listTasks, getTask, updateTask, deleteTask } from "../services/task.service.js";
+import { z } from "zod";
 
-import { createTask, deleteTask, getTask, listTasks, updateTask } from "../services/task.service.js";
-import { createTaskSchema, updateTaskSchema } from "../validators/task.validator.js";
-import type { TaskStatus, UserRole } from "../types/enums.js";
+const createTaskSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  status: z.enum(["TO_DO", "IN_PROGRESS", "DONE", "BLOCKED"]).optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
+  dueDate: z.string().optional().transform((val) => (val ? new Date(val) : undefined)),
+  caseId: z.string(),
+  assignedToId: z.string().optional(),
+});
 
-export const createTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
+const updateTaskSchema = createTaskSchema.partial();
+
+export const createTaskHandler = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthenticated" });
-    }
-
-    const payload = createTaskSchema.parse(req.body);
-    const task = await createTask(payload, req.user.id);
-    res.status(201).json({ task });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const listTasksHandler = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const statusParam = req.query.status as string | undefined;
-    const validStatuses = ["NOT_STARTED", "IN_PROGRESS", "BLOCKED", "COMPLETED", "DEFERRED"];
-    const status = statusParam && validStatuses.includes(statusParam)
-      ? (statusParam as TaskStatus)
-      : undefined;
-
-    const result = await listTasks({
-      projectId: req.query.projectId as string | undefined,
-      assigneeId: req.query.assigneeId as string | undefined,
-      status,
-      skip: req.query.skip ? Number(req.query.skip) : undefined,
-      take: req.query.take ? Number(req.query.take) : undefined
+    const data = createTaskSchema.parse(req.body);
+    const task = await createTask({
+      ...data,
+      creatorId: req.user!.userId,
     });
-
-    res.json(result);
-  } catch (error) {
-    next(error);
+    res.status(201).json(task);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || "Failed to create task" });
   }
 };
 
-export const getTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const listTasksHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const task = await getTask(req.params.id);
-    res.json({ task });
-  } catch (error) {
-    next(error);
+    const tasks = await listTasks({
+      caseId: req.query.caseId as string,
+      assignedToId: req.user?.role === "EMPLOYEE" ? req.user.userId : (req.query.assignedToId as string),
+      status: req.query.status as any,
+      skip: req.query.skip ? Number(req.query.skip) : undefined,
+      take: req.query.take ? Number(req.query.take) : undefined,
+    });
+    res.json(tasks);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || "Failed to list tasks" });
   }
 };
 
-export const updateTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const getTaskHandler = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthenticated" });
+    const task = await getTask(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
     }
-
-    const payload = updateTaskSchema.parse(req.body);
-    const current = await getTask(req.params.id);
-
-    const privilegedRoles: UserRole[] = [
-      "SUPER_ADMIN",
-      "ADMIN",
-      "PROJECT_MANAGER",
-      "TEAM_LEAD"
-    ];
-    const hasPrivilege = privilegedRoles.includes(req.user.role);
-    const isAssignee = current.assigneeId === req.user.id;
-
-    if (!hasPrivilege && !isAssignee) {
-      return res.status(403).json({ message: "Insufficient permissions" });
-    }
-
-    const task = await updateTask(req.params.id, payload, req.user.id);
-    res.json({ task });
-  } catch (error) {
-    next(error);
+    res.json(task);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || "Failed to get task" });
   }
 };
 
-export const deleteTaskHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const updateTaskHandler = async (req: AuthRequest, res: Response) => {
   try {
-    await deleteTask(req.params.id);
+    const data = updateTaskSchema.parse(req.body);
+    const task = await updateTask(req.params.taskId, data);
+    res.json(task);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || "Failed to update task" });
+  }
+};
+
+export const deleteTaskHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    await deleteTask(req.params.taskId);
     res.status(204).send();
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || "Failed to delete task" });
   }
 };
 

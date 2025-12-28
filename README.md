@@ -1,223 +1,206 @@
-# Webertron Technologies - Company Website
+# Legal Firm Dashboard
 
-A modern, responsive website for Webertron Technologies, an IT service company specializing in web development, digital marketing, and comprehensive technology solutions.
+A comprehensive web application for legal firms to manage cases, documents, and employee tasks. Built with React, TypeScript, Node.js, Express, and Prisma.
 
 ## Features
 
-- **Modern Design**: Minimalist layout with bold typography and generous whitespace
-- **Dark Mode**: Toggle between light and dark themes with persistent preference
-- **AI-Powered Chatbot**: Interactive chatbot with CRUD functionality for managing conversations
-- **Voice Search**: Web Speech API integration for voice-activated navigation
-- **Responsive Design**: Mobile-first approach, fully responsive across all devices
-- **Performance Optimized**: Fast loading times with optimized assets
-- **Security**: SSL-ready with security headers and badges
+### Admin View
+- View all cases and their status
+- Track employee tasks and workload
+- Monitor case progress and statistics
+- Manage users and assignments
+
+### Employee View
+- Upload documents (PDF, Images, Videos, Audio, and any file format)
+- Update case details and status
+- Manage assigned tasks
+- View assigned cases
+
+### Document Management
+- Upload multiple file types (PDF, Images, Videos, Audio, Documents, etc.)
+- Associate documents with cases
+- Download and delete documents
+- Filter documents by type and case
+
+### Case Management
+- Create and manage legal cases
+- Assign cases to employees
+- Track case status and priority
+- View case documents and tasks
 
 ## Tech Stack
 
-- HTML5
-- CSS3 (Custom Properties, Flexbox, Grid)
-- Vanilla JavaScript (ES6+)
-- Web Speech API
-- LocalStorage for data persistence
+### Backend
+- Node.js with Express
+- TypeScript
+- Prisma ORM with SQLite
+- JWT Authentication
+- Multer for file uploads
+- Zod for validation
+
+### Frontend
+- React 18 with TypeScript
+- React Router for navigation
+- TanStack Query for data fetching
+- Tailwind CSS for styling
+- Lucide React for icons
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ installed
+- npm or yarn package manager
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+```bash
+cd backend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables (optional, defaults are fine for development):
+```bash
+cp .env.example .env
+```
+
+4. **IMPORTANT: Setup database and seed users:**
+```bash
+# This will generate Prisma client, create database, and seed default users
+npm run setup
+```
+
+Or manually:
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+npm run seed
+```
+
+5. Start the backend server:
+```bash
+npm run dev
+```
+
+The backend will run on `http://localhost:4000`
+
+**⚠️ Important:** Make sure to run `npm run seed` to create the default users!
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+```bash
+cd frontend
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+The frontend will run on `http://localhost:5173`
+
+## Default Credentials
+
+**⚠️ You must run `npm run seed` in the backend directory first!**
+
+After running the seed script, you can login with:
+
+**Admin Account:**
+- Email: `admin@legal.com`
+- Password: `password123`
+
+**Employee Account:**
+- Email: `employee@legal.com`
+- Password: `password123`
+
+If login doesn't work, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) or [QUICK_FIX.md](./QUICK_FIX.md)
 
 ## Project Structure
 
 ```
-.
-├── index.html          # Main HTML file
-├── styles.css          # All styles and themes
-├── script.js           # JavaScript functionality
-├── vercel.json         # Vercel deployment configuration
-└── README.md           # This file
+legal-firm-dashboard/
+├── backend/
+│   ├── src/
+│   │   ├── config/          # Configuration files
+│   │   ├── controllers/     # Route controllers
+│   │   ├── middlewares/     # Auth and upload middlewares
+│   │   ├── routes/          # API routes
+│   │   ├── services/        # Business logic
+│   │   ├── utils/           # Utility functions
+│   │   └── server.ts        # Entry point
+│   ├── prisma/
+│   │   └── schema.prisma   # Database schema
+│   └── uploads/            # Uploaded files directory
+├── frontend/
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── hooks/          # Custom hooks
+│   │   ├── layouts/        # Layout components
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API services
+│   │   └── types/          # TypeScript types
+└── README.md
 ```
 
-## Deployment to Vercel
+## API Endpoints
 
-### Prerequisites
+### Authentication
+- `POST /api/auth/login` - Login
+- `POST /api/auth/register` - Register new user
 
-- A Vercel account (sign up at [vercel.com](https://vercel.com))
-- Git installed on your computer
-- Your website files ready
+### Cases
+- `GET /api/cases` - List all cases
+- `GET /api/cases/:id` - Get case details
+- `POST /api/cases` - Create new case
+- `PUT /api/cases/:id` - Update case
+- `DELETE /api/cases/:id` - Delete case
+- `POST /api/cases/:id/assign` - Assign case to user
 
-### Method 1: Deploy via Vercel CLI (Recommended)
+### Documents
+- `GET /api/documents` - List all documents
+- `GET /api/documents/:id` - Get document details
+- `POST /api/documents/upload` - Upload document
+- `GET /api/documents/:id/download` - Download document
+- `DELETE /api/documents/:id` - Delete document
 
-1. **Install Vercel CLI** (if not already installed):
-   ```bash
-   npm install -g vercel
-   ```
+### Tasks
+- `GET /api/tasks` - List all tasks
+- `GET /api/tasks/:id` - Get task details
+- `POST /api/tasks` - Create new task
+- `PUT /api/tasks/:id` - Update task
+- `DELETE /api/tasks/:id` - Delete task
 
-2. **Login to Vercel**:
-   ```bash
-   vercel login
-   ```
+## Features in Detail
 
-3. **Navigate to your project directory**:
-   ```bash
-   cd "D:\new website"
-   ```
+### Document Upload
+- Supports all file types (PDF, Images, Videos, Audio, Documents, etc.)
+- File size limit: 100MB per file
+- Documents can be associated with cases
+- Optional descriptions for documents
 
-4. **Deploy to Vercel**:
-   ```bash
-   vercel
-   ```
-   
-   Follow the prompts:
-   - Set up and deploy? **Yes**
-   - Which scope? Select your account
-   - Link to existing project? **No**
-   - What's your project's name? `webertron-technologies` (or your preferred name)
-   - In which directory is your code located? `./` (current directory)
-   - Want to override the settings? **No**
+### Case Management
+- Case statuses: Open, In Progress, Under Review, Pending Client, Settled, Closed, Archived
+- Priority levels: Low, Medium, High, Critical
+- Case assignments to employees
+- Case documents and tasks tracking
 
-5. **Your site will be live!** You'll get a URL like: `https://webertron-technologies.vercel.app`
-
-6. **For production deployment**:
-   ```bash
-   vercel --prod
-   ```
-
-### Method 2: Deploy via GitHub Integration
-
-1. **Initialize Git repository** (if not already done):
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
-
-2. **Create a GitHub repository**:
-   - Go to [github.com](https://github.com) and create a new repository
-   - Don't initialize with README, .gitignore, or license
-
-3. **Push your code to GitHub**:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-4. **Connect to Vercel**:
-   - Go to [vercel.com/dashboard](https://vercel.com/dashboard)
-   - Click "Add New Project"
-   - Import your GitHub repository
-   - Configure project:
-     - Framework Preset: **Other**
-     - Root Directory: `./`
-     - Build Command: (leave empty)
-     - Output Directory: (leave empty)
-   - Click "Deploy"
-
-5. **Your site will be automatically deployed!**
-
-### Method 3: Deploy via Vercel Dashboard (Drag & Drop)
-
-1. **Prepare your files**:
-   - Ensure all files (index.html, styles.css, script.js, vercel.json) are in the root directory
-
-2. **Go to Vercel Dashboard**:
-   - Visit [vercel.com/dashboard](https://vercel.com/dashboard)
-   - Click "Add New Project"
-
-3. **Upload files**:
-   - Select "Deploy" tab
-   - Drag and drop your project folder or zip file
-
-4. **Configure and deploy**:
-   - Project name: `webertron-technologies`
-   - Framework Preset: **Other**
-   - Click "Deploy"
-
-## Custom Domain Setup (For Later)
-
-Once you have a domain name:
-
-1. **In Vercel Dashboard**:
-   - Go to your project
-   - Click "Settings" → "Domains"
-   - Click "Add Domain"
-   - Enter your domain name (e.g., `webertron.com`)
-
-2. **Configure DNS**:
-   - Vercel will provide DNS records
-   - Add these records to your domain registrar:
-     - Type: `A` or `CNAME`
-     - Name: `@` or `www`
-     - Value: Provided by Vercel
-
-3. **Wait for propagation** (usually 24-48 hours)
-
-4. **SSL Certificate**: Vercel automatically provisions SSL certificates for custom domains
-
-## Local Development
-
-To test the website locally:
-
-1. **Using a simple HTTP server** (Python):
-   ```bash
-   python -m http.server 8000
-   ```
-   Then visit: `http://localhost:8000`
-
-2. **Using Node.js http-server**:
-   ```bash
-   npx http-server
-   ```
-
-3. **Using VS Code Live Server extension**:
-   - Install "Live Server" extension
-   - Right-click on `index.html`
-   - Select "Open with Live Server"
-
-## Features Documentation
-
-### Dark Mode
-- Toggle button in navigation bar
-- Preference saved in localStorage
-- Automatically applies on page load
-
-### AI Chatbot
-- Click the chat button in bottom-right corner
-- Full CRUD functionality:
-  - Create: Send new messages
-  - Read: View conversation history
-  - Update: Edit your messages
-  - Delete: Remove messages or conversations
-- All data persisted in localStorage
-
-### Voice Search
-- Click microphone icon in navigation
-- Speak your query
-- Automatically navigates to relevant sections
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Performance
-
-- Lighthouse Score: 90+ (expected)
-- First Contentful Paint: < 1.5s
-- Time to Interactive: < 3s
-- All assets optimized for fast loading
-
-## Security
-
-- HTTPS enabled by default on Vercel
-- Security headers configured in vercel.json
-- XSS protection enabled
-- Content Security Policy ready
-
-## Support
-
-For issues or questions:
-- Email: info@webertron.com
-- Check Vercel documentation: [vercel.com/docs](https://vercel.com/docs)
+### Task Management
+- Task statuses: To Do, In Progress, Done, Blocked
+- Task assignment to employees
+- Task priority levels
+- Due dates for tasks
 
 ## License
 
-© 2024 Webertron Technologies. All rights reserved.
+MIT
 
