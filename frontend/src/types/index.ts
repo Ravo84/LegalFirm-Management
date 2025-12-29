@@ -5,6 +5,8 @@ export interface User {
   lastName: string;
   role: "ADMIN" | "EMPLOYEE";
   fullName: string;
+  isActive?: boolean;      // added
+  createdAt?: string;      // added
 }
 
 export interface Case {
@@ -64,10 +66,20 @@ export interface Document {
   caseId?: string;
   uploadedById: string;
   uploadedBy: User;
+  case?: {               // added to fix Documents errors
+    caseNumber: string;
+    [key: string]: any;
+  };
 }
 
-export type CaseStatus = "OPEN" | "IN_PROGRESS" | "UNDER_REVIEW" | "PENDING_CLIENT" | "SETTLED" | "CLOSED" | "ARCHIVED";
+export type CaseStatus =
+  | "OPEN"
+  | "IN_PROGRESS"
+  | "UNDER_REVIEW"
+  | "PENDING_CLIENT"
+  | "SETTLED"
+  | "CLOSED"
+  | "ARCHIVED";
 export type TaskStatus = "TO_DO" | "IN_PROGRESS" | "DONE" | "BLOCKED";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type DocumentType = "PDF" | "IMAGE" | "VIDEO" | "AUDIO" | "DOCUMENT" | "OTHER";
-

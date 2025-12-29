@@ -65,7 +65,7 @@ const CaseDetailPage = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const file = (formData.get("file") as File) || null;
-    const description = formData.get("description") as string;
+    
 
     if (file) {
       uploadMutation.mutate(file);

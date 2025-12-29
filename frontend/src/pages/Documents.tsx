@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { documentsService } from "../services/documents";
 import { casesService } from "../services/cases";
-import { Upload, FileText, Download, Trash2, Filter, Search, Image, Video, Music, File } from "lucide-react";
+import { Upload, FileText, Download, Trash2, Search, Image, Video, Music, File } from "lucide-react";
 
 const DocumentsPage = () => {
   const [search, setSearch] = useState("");

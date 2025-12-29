@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersService } from "../services/users";
-import { Users, Plus, Mail, User, Shield, UserCheck } from "lucide-react";
+import { Users, Plus, User, Shield } from "lucide-react";
 
 const AdminUsersPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -90,8 +90,9 @@ const AdminUsersPage = () => {
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-4">
-              Created: {new Date(user.createdAt).toLocaleDateString()}
-            </p>
+  Created: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+</p>
+
           </div>
         ))}
       </div>

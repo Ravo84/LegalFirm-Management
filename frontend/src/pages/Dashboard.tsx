@@ -32,18 +32,22 @@ const DashboardPage = () => {
   });
 
   const stats = {
-    totalCases: casesQuery.data?.pagination.total || 0,
-    activeCases: casesQuery.data?.data.filter((c) => c.status === "IN_PROGRESS" || c.status === "OPEN").length || 0,
-    totalTasks: tasksQuery.data?.pagination.total || 0,
-    completedTasks: tasksQuery.data?.data.filter((t) => t.status === "DONE").length || 0,
-    totalDocuments: documentsQuery.data?.pagination.total || 0,
-    totalEmployees: usersQuery.data?.pagination.total || 0,
+    totalCases: casesQuery.data?.pagination?.total || 0,
+    activeCases:
+      casesQuery.data?.data?.filter((c) => c.status === "IN_PROGRESS" || c.status === "OPEN").length || 0,
+    totalTasks: tasksQuery.data?.pagination?.total || 0,
+    completedTasks:
+      tasksQuery.data?.data?.filter((t) => t.status === "DONE").length || 0,
+    totalDocuments: documentsQuery.data?.pagination?.total || 0,
+    totalEmployees: usersQuery.data?.pagination?.total || 0,
   };
 
-  const myTasks = tasksQuery.data?.data.filter((t) => t.assignedToId === user?.id) || [];
-  const myCases = casesQuery.data?.data.filter(
-    (c) => c.assignments?.some((a) => a.userId === user?.id) || c.managerId === user?.id
-  ) || [];
+  const myTasks =
+    tasksQuery.data?.data?.filter((t) => t.assignedToId === user?.id) || [];
+  const myCases =
+    casesQuery.data?.data?.filter(
+      (c) => c.assignments?.some((a) => a.userId === user?.id) || c.managerId === user?.id
+    ) || [];
 
   return (
     <div className="space-y-6">
@@ -63,21 +67,15 @@ const DashboardPage = () => {
         <StatCard
           icon={TrendingUp}
           label="Active Cases"
-          value={isAdmin ? stats.activeCases : myCases.filter((c) => c.status === "IN_PROGRESS" || c.status === "OPEN").length}
+          value={
+            isAdmin
+              ? stats.activeCases
+              : myCases.filter((c) => c.status === "IN_PROGRESS" || c.status === "OPEN").length
+          }
           color="green"
         />
-        <StatCard
-          icon={CheckCircle}
-          label="My Tasks"
-          value={myTasks.length}
-          color="purple"
-        />
-        <StatCard
-          icon={FileText}
-          label="Documents"
-          value={stats.totalDocuments}
-          color="orange"
-        />
+        <StatCard icon={CheckCircle} label="My Tasks" value={myTasks.length} color="purple" />
+        <StatCard icon={FileText} label="Documents" value={stats.totalDocuments} color="orange" />
       </div>
 
       {isAdmin && (
@@ -92,8 +90,9 @@ const DashboardPage = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Employee Task Overview</h2>
             <div className="space-y-4">
-              {usersQuery.data?.data.map((employee) => {
-                const employeeTasks = tasksQuery.data?.data.filter((t) => t.assignedToId === employee.id) || [];
+              {usersQuery.data?.data?.map((employee) => {
+                const employeeTasks =
+                  tasksQuery.data?.data?.filter((t) => t.assignedToId === employee.id) || [];
                 const completed = employeeTasks.filter((t) => t.status === "DONE").length;
                 const inProgress = employeeTasks.filter((t) => t.status === "IN_PROGRESS").length;
                 const todo = employeeTasks.filter((t) => t.status === "TO_DO").length;
@@ -123,7 +122,7 @@ const DashboardPage = () => {
           {isAdmin ? "Recent Cases" : "My Cases"}
         </h2>
         <div className="space-y-3">
-          {(isAdmin ? casesQuery.data?.data : myCases)
+          {(isAdmin ? casesQuery.data?.data ?? [] : myCases ?? [])
             .slice(0, 5)
             .map((case_) => (
               <div key={case_.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
@@ -176,7 +175,11 @@ const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => {
           <p className="text-sm text-gray-600">{label}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg ${colorClasses[color as keyof typeof colorClasses]} flex items-center justify-center`}>
+        <div
+          className={`w-12 h-12 rounded-lg ${
+            colorClasses[color as keyof typeof colorClasses]
+          } flex items-center justify-center`}
+        >
           <Icon className="w-6 h-6" />
         </div>
       </div>
@@ -185,4 +188,3 @@ const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => {
 };
 
 export default DashboardPage;
-
