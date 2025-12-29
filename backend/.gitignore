@@ -5,4 +5,3 @@ uploads/
 *.log
 prisma/dev.db
 prisma/dev.db-journal
-
