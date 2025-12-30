@@ -1,15 +1,17 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+// ❌ No localhost fallback in production
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`, // ✅ VERY IMPORTANT
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
-// Add token to requests
+// Attach token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -31,3 +33,4 @@ api.interceptors.response.use(
   }
 );
 
+export default api;

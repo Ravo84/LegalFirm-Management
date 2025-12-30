@@ -1,3 +1,5 @@
+console.log("API BASE URL =", import.meta.env.VITE_API_BASE_URL);
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

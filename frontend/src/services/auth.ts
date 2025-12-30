@@ -22,16 +22,32 @@ export interface AuthResponse {
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
-      const { data } = await api.post<AuthResponse>("/auth/login", credentials);
+      const { data } = await api.post<AuthResponse>(
+        "/auth/login",
+        credentials
+      );
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+
       return data;
     } catch (error: any) {
-      // Provide more detailed error message
-      if (error.code === "ECONNREFUSED" || error.message?.includes("Network")) {
-        throw new Error("Cannot connect to server. Make sure backend is running on http://localhost:4000");
+      // ✅ Backend responded with error (401, 400 etc.)
+      if (error.response) {
+        throw new Error(
+          error.response.data?.message || "Invalid email or password"
+        );
       }
-      throw error;
+
+      // ✅ Request made but no response (network / CORS / server down)
+      if (error.request) {
+        throw new Error(
+          "Unable to reach server. Please try again later."
+        );
+      }
+
+      // ✅ Any unexpected error
+      throw new Error("Unexpected error occurred during login");
     }
   },
 
@@ -54,4 +70,5 @@ export const authService = {
     return localStorage.getItem("token");
   },
 };
+
 
