@@ -21,4 +21,11 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api", apiRouter);
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "Legal Firm Backend is running 🚀"
+  });
+});
+
+
 export default app; // ✅ THIS LINE IS THE KEY
